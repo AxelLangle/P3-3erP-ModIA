@@ -31,6 +31,7 @@ UMAP_HTML = 'data/umap_3d.html'
 MODELO_KNN = 'data/modelo_knn.pkl'
 UPLOAD_FOLDER = 'data/uploads'
 METRICAS_CSV = 'data/metricas_knn.csv'
+EMBEDDINGS_NPY = 'data/embeddings.npy'
 
 # Configuración de la app
 st.set_page_config(page_title="Laboratorio de Identidades", layout="wide")
@@ -52,11 +53,11 @@ if st.button("Procesar Dataset Automáticamente"):
 # Paso 2: Agrupar rostros
 st.subheader("Paso 2: Agrupar rostros")
 if st.button("Ejecutar clustering DBSCAN"):
-    if os.path.exists(LOTE_JSON):
+    if os.path.exists(EMBEDDINGS_NPY):
         agrupar_rostros()
         st.success("Clustering ejecutado correctamente.")
     else:
-        st.warning("Primero debes subir imágenes para generar embeddings.")
+        st.warning("Primero debes procesar el dataset para generar los embeddings.")
 
 # Paso 3: Generar visualización UMAP 3D
 st.subheader("Paso 3: Visualizar espacio latente")
@@ -67,42 +68,7 @@ if st.button("Generar visualización"):
     else:
         st.warning("Primero debes ejecutar el clustering.")
 
-# Paso 4: Etiquetado manual
-st.subheader("Paso 4: Etiquetado de rostros")
-if os.path.exists(LOTE_JSON):
-    with open(LOTE_JSON, 'r') as f:
-        lote = json.load(f)
-
-    etiquetas = {}
-    paths = list(lote.keys())
-    cols = st.columns(5)
-
-    for i, path in enumerate(paths):
-        if os.path.exists(path):
-            with cols[i % 5]:
-                st.image(path, caption=os.path.basename(path), width=150)
-                etiqueta = st.text_input(f"Etiqueta para {os.path.basename(path)}", key=path)
-                if etiqueta:
-                    etiquetas[path] = {
-                        "embedding": lote[path],
-                        "nombre": etiqueta
-                    }
-        else:
-            st.warning(f"No se encontró la imagen: {path}")
-
-    if etiquetas:
-        if os.path.exists(HISTORICO_JSON):
-            with open(HISTORICO_JSON, 'r') as f:
-                historico = json.load(f)
-        else:
-            historico = {}
-
-        historico.update(etiquetas)
-        with open(HISTORICO_JSON, 'w') as f:
-            json.dump(historico, f, indent=2)
-        st.success("Etiquetas guardadas en el histórico.")
-else:
-    st.info("Primero debes subir imágenes para generar embeddings.")
+# Paso 4: (El etiquetado manual fue removido ya que el Paso 1 lo hace automáticamente)
 
 # Paso 5: Entrenar clasificador KNN
 st.subheader("Paso 5: Entrenar modelo KNN")
