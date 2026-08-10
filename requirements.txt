@@ -1,0 +1,24 @@
+# Básicos de instalación
+setuptools
+wheel
+
+# Núcleo y embeddings
+numpy==1.24.4
+pandas
+scikit-learn
+facenet-pytorch
+
+# Visualización y front-end
+streamlit
+plotly
+matplotlib
+
+# Reducción de dimensionalidad y clustering
+umap-learn
+
+#seaborn
+
+# Utilidades opcionales
+tqdm         
+joblib       
+python-dotenv  
