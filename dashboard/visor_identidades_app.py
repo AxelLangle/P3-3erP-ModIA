@@ -37,29 +37,17 @@ st.set_page_config(page_title="Laboratorio de Identidades", layout="wide")
 st.title("Laboratorio de Identidades Faciales")
 
 # Paso 1: Subir imágenes y generar embeddings
-st.subheader("Paso 1: Subir imágenes para generar embeddings")
-uploaded_images = st.file_uploader("Sube imágenes faciales", type=['jpg', 'png'], accept_multiple_files=True)
+st.subheader("Paso 1: Preparación y Etiquetado Automático (Lotes)")
+st.info("Coloca tus carpetas ('Donald_Trump', 'Donald_Trump_Obstruido', 'Impostor') dentro de una carpeta llamada 'dataset_practica'.")
 
-if uploaded_images:
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-    rutas_temporales = []
-
-    for img_file in uploaded_images:
-        ruta = os.path.join(UPLOAD_FOLDER, img_file.name)
-        with open(ruta, "wb") as f:
-            f.write(img_file.getbuffer())
-        rutas_temporales.append(ruta)
-
-    imagenes_para_embeddings = [open(ruta, "rb") for ruta in rutas_temporales]
-    embeddings_generados = generar_embeddings(imagenes_subidas=imagenes_para_embeddings)
-
-    for f in imagenes_para_embeddings:
-        f.close()
-
-    if embeddings_generados:
-        st.success("Embeddings generados y guardados correctamente.")
-    else:
-        st.warning("No se detectaron rostros en las imágenes subidas.")
+if st.button("Procesar Dataset Automáticamente"):
+    with st.spinner("Extrayendo rostros y generando embeddings... (Esto puede tomar unos minutos)"):
+        # Llama a la función modificada
+        exito = generar_embeddings(ruta_dataset='dataset_practica')
+        
+        if exito:
+            st.success("¡Lotes procesados, etiquetados y guardados exitosamente!")
+            st.balloons()
 
 # Paso 2: Agrupar rostros
 st.subheader("Paso 2: Agrupar rostros")
