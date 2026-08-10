@@ -54,8 +54,10 @@ if st.button("Procesar Dataset Automáticamente"):
 st.subheader("Paso 2: Agrupar rostros")
 if st.button("Ejecutar clustering DBSCAN"):
     if os.path.exists(EMBEDDINGS_NPY):
-        agrupar_rostros()
-        st.success("Clustering ejecutado correctamente.")
+        if agrupar_rostros():
+            st.success("Clustering ejecutado correctamente.")
+        else:
+            st.error("El archivo de embeddings está vacío. No se pudo realizar el agrupamiento.")
     else:
         st.warning("Primero debes procesar el dataset para generar los embeddings.")
 
