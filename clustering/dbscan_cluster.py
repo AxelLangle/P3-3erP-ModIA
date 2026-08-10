@@ -17,12 +17,12 @@ def agrupar_rostros():
 
     if not os.path.exists(EMBEDDINGS_NPY):
         print(f"Archivo '{EMBEDDINGS_NPY}' no encontrado. Ejecuta primero la fase de embeddings.")
-        return
+        return False
 
     embeddings_dict = np.load(EMBEDDINGS_NPY, allow_pickle=True).item()
     if not embeddings_dict:
         print("No se encontraron embeddings en el archivo.")
-        return
+        return False
 
     X = np.array(list(embeddings_dict.values()))
     paths = list(embeddings_dict.keys())
@@ -45,3 +45,4 @@ def agrupar_rostros():
     df = pd.DataFrame({'Imagen': paths, 'Grupo': labels})
     df.to_csv(RESULTADOS_CSV, index=False)
     print(f"Resultados guardados en '{RESULTADOS_CSV}'")
+    return True
