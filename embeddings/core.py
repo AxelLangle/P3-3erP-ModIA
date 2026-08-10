@@ -52,8 +52,6 @@ def generar_embeddings(ruta_dataset='dataset_practica'):
 
         # Procesar cada imagen dentro del lote
         for nombre_img in os.listdir(ruta_lote):
-            if not nombre_img.lower().endswith(('.png', '.jpg', '.jpeg')): continue
-            
             ruta_completa = os.path.join(ruta_lote, nombre_img)
             
             try:
