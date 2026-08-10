@@ -21,4 +21,4 @@ umap-learn
 # Utilidades opcionales
 tqdm         
 joblib       
-python-dotenv  
+python-dotenv  seaborn
