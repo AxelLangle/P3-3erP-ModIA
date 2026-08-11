@@ -7,6 +7,7 @@ numpy==1.24.4
 pandas
 scikit-learn
 facenet-pytorch
+opencv-python==4.10.0.84
 
 # Visualización y front-end
 streamlit
@@ -21,4 +22,5 @@ umap-learn
 # Utilidades opcionales
 tqdm         
 joblib       
-python-dotenv  seaborn
+python-dotenv
+seaborn
