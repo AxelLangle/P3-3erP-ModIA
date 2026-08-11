@@ -21,12 +21,12 @@ def main():
         visualizar_espacio_latente()
 
     elif args.fase == 'classification':
-        from classification.knn_classifier import entrenar_clasificador
+        from classification.trainer_knn import entrenar_clasificador
         entrenar_clasificador()
 
     elif args.fase == 'dashboard':
-        from dashboard.visor_identidades_app import obtener_embedding
-        obtener_embedding()
+        import subprocess
+        subprocess.run(['streamlit', 'run', 'dashboard/visor_identidades_app.py'])
 
 if __name__ == "__main__":
         print("Ejecutando el script principal...")
