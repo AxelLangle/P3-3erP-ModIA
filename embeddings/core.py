@@ -57,8 +57,13 @@ def generar_embeddings(ruta_dataset='dataset_practica'):
         exitos_lote = 0
         fallos_lote = 0
 
+        # Ignorar archivos del sistema (dejar que PIL/cv2 manejen cualquier formato)
+        ARCHIVOS_IGNORAR = {'thumbs.db', 'desktop.ini', '.ds_store', '.gitkeep'}
+
         # Procesar cada imagen dentro del lote
         for nombre_img in os.listdir(ruta_lote):
+            if nombre_img.lower() in ARCHIVOS_IGNORAR or nombre_img.startswith('.'):
+                continue
             ruta_completa = os.path.join(ruta_lote, nombre_img)
             
             try:
@@ -107,6 +112,11 @@ def generar_embeddings(ruta_dataset='dataset_practica'):
     print(f"Total imágenes con fallo: {total_fallos}")
     print(f"---------------------\n")
 
+    # Validar que se haya generado al menos un embedding
+    if total_exitos == 0:
+        print("ERROR: No se generó ningún embedding. Revisa que las imágenes contengan rostros detectables.")
+        return False
+
     # --- GUARDADO FINAL ---
     # Guardar para DBSCAN
     np.save(EMBEDDINGS_NPY, embeddings_dict_npy)
@@ -117,4 +127,4 @@ def generar_embeddings(ruta_dataset='dataset_practica'):
         json.dump(historico, f, indent=2)
     print(f"Histórico etiquetado listo para Clasificación guardado en '{HISTORICO_JSON}'")
 
-    return True
+    return total_exitos
