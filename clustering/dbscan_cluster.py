@@ -35,7 +35,7 @@ def agrupar_rostros():
 
     # Resultados por imagen
     for path, label in zip(paths, labels):
-        print(f"{os.path.basename(path)} → Cluster {label}")
+        print(f"{os.path.basename(path)} -> Cluster {label}")
 
     # Resumen
     conteo = Counter(labels)
