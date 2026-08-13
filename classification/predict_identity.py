@@ -34,7 +34,7 @@ def predecir_identidad_con_confianza(embedding, path_modelo='data/modelo_knn.pkl
     similitud = 1.0 - (d**2) / 2.0
     confianza = max(0.0, round(similitud * 100, 2))
     
-    UMBRAL_CONFIANZA = 50.0  # Umbral minimo
+    UMBRAL_CONFIANZA = 70.0  # Umbral minimo solicitado por el usuario
     
     if confianza < UMBRAL_CONFIANZA:
         nombre = "Desconocido (No es Donald Trump)"

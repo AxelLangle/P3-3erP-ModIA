@@ -73,8 +73,8 @@ def separar_datos(historico):
     return sets
 
 
-def _clasificar_knn(X_train, y_train, X_test, k=3):
-    """KNN supervisado. Si solo hay 1 clase, usa umbral de distancia."""
+def _clasificar_knn(X_train, y_train, X_test, k=3, umbral_similitud=0.50):
+    """KNN supervisado. Si solo hay 1 clase, usa umbral de similitud coseno."""
     clases = list(set(y_train))
     k_eff = min(k, len(X_train))
     if len(clases) < 2:
@@ -85,7 +85,7 @@ def _clasificar_knn(X_train, y_train, X_test, k=3):
         preds = []
         for d in distances:
             sim = 1.0 - (d**2)/2.0
-            if sim >= 0.50:
+            if sim >= umbral_similitud:
                 preds.append(clases[0])
             else:
                 preds.append('Impostor')
@@ -95,7 +95,7 @@ def _clasificar_knn(X_train, y_train, X_test, k=3):
     return list(knn.predict(X_test))
 
 
-def _clasificar_kmeans(X_train, y_train, X_test, n_clusters=2):
+def _clasificar_kmeans(X_train, y_train, X_test, n_clusters=2, umbral_similitud=0.50):
     """K-Means: asigna etiqueta por voto mayoritario del cluster."""
     clases = list(set(y_train))
     if len(clases) < 2:
@@ -104,7 +104,7 @@ def _clasificar_kmeans(X_train, y_train, X_test, n_clusters=2):
         centroid = centroid / np.linalg.norm(centroid)
         X_test_norm = X_test / np.linalg.norm(X_test, axis=1, keepdims=True)
         sims = np.dot(X_test_norm, centroid)
-        return [clases[0] if s >= 0.50 else 'Impostor' for s in sims]
+        return [clases[0] if s >= umbral_similitud else 'Impostor' for s in sims]
     k_eff = min(n_clusters, len(X_train))
     km = KMeans(n_clusters=k_eff, random_state=42, n_init=10)
     km.fit(X_train)
@@ -116,8 +116,8 @@ def _clasificar_kmeans(X_train, y_train, X_test, n_clusters=2):
     return [mapping.get(c, 'Desconocido') for c in km.predict(X_test)]
 
 
-def _clasificar_dbscan(X_train, y_train, X_test, eps=0.9, min_samples=2):
-    """DBSCAN: one-class usa eps como umbral; multi-class usa vecino más cercano."""
+def _clasificar_dbscan(X_train, y_train, X_test, eps=0.9, min_samples=2, umbral_similitud=0.50):
+    """DBSCAN: one-class usa umbral_similitud; multi-class usa vecino más cercano."""
     clases = list(set(y_train))
     db = DBSCAN(eps=eps, min_samples=min_samples, metric='euclidean')
     db_labels = db.fit_predict(X_train)
@@ -138,9 +138,9 @@ def _clasificar_dbscan(X_train, y_train, X_test, eps=0.9, min_samples=2):
         dist = distances[i][0]
         lbl = db_labels[idx]
         if len(clases) < 2:
-            # One-class: cosine similarity vs umbral 0.50
+            # One-class: cosine similarity vs umbral
             sim = 1.0 - (dist**2)/2.0
-            preds.append(clases[0] if sim >= 0.50 else 'Impostor')
+            preds.append(clases[0] if sim >= umbral_similitud else 'Impostor')
         else:
             preds.append(mapping.get(lbl, y_train[idx]))
     return preds
@@ -268,51 +268,59 @@ if st.button("Entrenar KNN", key="btn_knn"):
 
 st.markdown("---")
 
-# ═══════════════════════════════════════════════════════════════
-#  SECCIÓN 4 — EVALUACIÓN Y PRUEBAS
-# ═══════════════════════════════════════════════════════════════
-st.header("📊 Sección 4: Evaluación y Pruebas de Reconocimiento")
-st.info(
-    "Se evalúan **KNN**, **K-Means** y **DBSCAN** en dos escenarios:\n"
-    "- 🛡️ **Robustez** — imágenes con obstrucciones → debe reconocer al personaje\n"
-    "- 🎭 **Confusión** — imágenes del impostor → debe rechazarlas"
-)
+if os.path.exists(HISTORICO_JSON):
+    with open(HISTORICO_JSON, 'r') as f:
+        hist = json.load(f)
+    
+    st.write("---")
+    st.header("📊 Sección 4: Evaluación y Pruebas de Reconocimiento")
+    st.info(
+        "Se evalúan KNN, K-Means y DBSCAN en dos escenarios:\n"
+        "- 🛡️ **Robustez** — imágenes con obstrucciones → debe reconocer al personaje\n"
+        "- 🎭 **Confusión** — imágenes del impostor → debe rechazarlas"
+    )
+    
+    umbral_eval = st.slider(
+        "Ajuste del Umbral de Similitud (Tolerancia)", 
+        min_value=0.0, max_value=1.0, value=0.50, step=0.05,
+        help="Un umbral bajo acepta rostros más diferentes (mejora Robustez, pero acepta Impostores). Un umbral alto es más estricto (rechaza Impostores, pero falla en Robustez)."
+    )
 
-if st.button("🧪 Ejecutar Evaluación Completa", key="btn_eval"):
-    if not os.path.exists(HISTORICO_JSON):
-        st.error("No hay datos. Ejecuta primero el Paso 1.")
-    else:
-        with open(HISTORICO_JSON, 'r') as f:
-            hist = json.load(f)
-
-        datos = separar_datos(hist)
-        X_tr = np.array(datos['entrenamiento']['emb'])
-        y_tr = datos['entrenamiento']['lbl']
-
-        if len(X_tr) < 5:
-            st.error(f"Entrenamiento insuficiente: {len(X_tr)} muestras (mínimo 5).")
+    if st.button("🚀 Ejecutar Evaluación Completa", key="btn_eval"):
+        if not os.path.exists(HISTORICO_JSON):
+            st.error("No hay datos. Ejecuta primero el Paso 1.")
         else:
-            st.success(
-                f"📋 Datos cargados: **{len(X_tr)}** entrenamiento · "
-                f"**{len(datos['robustez']['emb'])}** robustez · "
-                f"**{len(datos['impostor']['emb'])}** impostor"
-            )
+            with open(HISTORICO_JSON, 'r') as f:
+                hist = json.load(f)
 
-            algos = [
-                ('KNN',     _clasificar_knn),
-                ('K-Means', _clasificar_kmeans),
-                ('DBSCAN',  _clasificar_dbscan),
-            ]
+            datos = separar_datos(hist)
+            X_tr = np.array(datos['entrenamiento']['emb'])
+            y_tr = datos['entrenamiento']['lbl']
 
-            olap_rows = []
-            all_true = {a: [] for a, _ in algos}
-            all_pred = {a: [] for a, _ in algos}
+            if len(X_tr) < 5:
+                st.error(f"Entrenamiento insuficiente: {len(X_tr)} muestras (mínimo 5).")
+            else:
+                st.success(
+                    f"📋 Datos cargados: **{len(X_tr)}** entrenamiento · "
+                    f"**{len(datos['robustez']['emb'])}** robustez · "
+                    f"**{len(datos['impostor']['emb'])}** impostor"
+                )
 
-            # ── PRUEBA DE ROBUSTEZ ──
-            if datos['robustez']['emb']:
-                st.subheader("🛡️ Prueba de Robustez")
-                st.caption(
-                    "Imágenes del personaje con obstrucciones (mascarilla, gafas, peluca). "
+                algos = [
+                    ('KNN', lambda xt, yt, xte: _clasificar_knn(xt, yt, xte, k=3, umbral_similitud=umbral_eval)),
+                    ('K-Means', lambda xt, yt, xte: _clasificar_kmeans(xt, yt, xte, n_clusters=2, umbral_similitud=umbral_eval)),
+                    ('DBSCAN', lambda xt, yt, xte: _clasificar_dbscan(xt, yt, xte, eps=0.9, umbral_similitud=umbral_eval))
+                ]
+
+                olap_rows = []
+                all_true = {a: [] for a, _ in algos}
+                all_pred = {a: [] for a, _ in algos}
+
+                # ── PRUEBA DE ROBUSTEZ ──
+                if datos['robustez']['emb']:
+                    st.subheader("🛡️ Prueba de Robustez")
+                    st.caption(
+                        "Imágenes del personaje con obstrucciones (mascarilla, gafas, peluca). "
                     "El modelo debe reconocerlo correctamente (≥ 90 % de precisión)."
                 )
                 X_rob = np.array(datos['robustez']['emb'])
@@ -343,9 +351,7 @@ if st.button("🧪 Ejecutar Evaluación Completa", key="btn_eval"):
                     "identificarlas como el personaje entrenado."
                 )
                 X_imp = np.array(datos['impostor']['emb'])
-                # Falsa etiqueta "Donald Trump" para que al predecir "Impostor" (rechazo correcto), 
-                # la métrica de accuracy sea baja (reflejando baja confusión/baja predicción errónea)
-                y_imp = ['Donald Trump'] * len(X_imp)
+                y_imp = datos['impostor']['lbl']
 
                 cols = st.columns(3)
                 for col, (nombre, fn) in zip(cols, algos):
