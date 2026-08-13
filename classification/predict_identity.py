@@ -27,7 +27,18 @@ def predecir_identidad_con_confianza(embedding, path_modelo='data/modelo_knn.pkl
         return None, 0
     nombre = modelo.predict([embedding])[0]
     distancia, _ = modelo.kneighbors([embedding], n_neighbors=1)
-    confianza = max(0, round(100 - distancia[0][0] * 100, 2))  # Escala ajustable
+    d = distancia[0][0]
+    
+    # Convertir distancia euclidiana a similitud coseno (embeddings normalizados)
+    # Cosine Sim = 1 - (d^2)/2
+    similitud = 1.0 - (d**2) / 2.0
+    confianza = max(0.0, round(similitud * 100, 2))
+    
+    UMBRAL_CONFIANZA = 50.0  # Umbral minimo
+    
+    if confianza < UMBRAL_CONFIANZA:
+        nombre = "Desconocido (No es Donald Trump)"
+        
     print(f"Identidad: {nombre} | Confianza: {confianza}%")
     return nombre, confianza
 
