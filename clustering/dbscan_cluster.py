@@ -19,9 +19,17 @@ def agrupar_rostros():
         print(f"Archivo '{EMBEDDINGS_NPY}' no encontrado. Ejecuta primero la fase de embeddings.")
         return False
 
-    embeddings_dict = np.load(EMBEDDINGS_NPY, allow_pickle=True).item()
+    embeddings_dict_raw = np.load(EMBEDDINGS_NPY, allow_pickle=True).item()
+    
+    # Filtrar solo datos de entrenamiento (excluir obstruidos e impostores)
+    embeddings_dict = {}
+    for path, emb in embeddings_dict_raw.items():
+        p = path.lower().replace('\\', '/')
+        if 'obstruido' not in p and 'obstructed' not in p and 'impostor' not in p:
+            embeddings_dict[path] = emb
+
     if not embeddings_dict:
-        print("No se encontraron embeddings en el archivo.")
+        print("No se encontraron embeddings de entrenamiento en el archivo.")
         return False
 
     X = np.array(list(embeddings_dict.values()))
