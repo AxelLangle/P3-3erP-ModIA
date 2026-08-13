@@ -243,11 +243,10 @@ if st.button("Entrenar KNN", key="btn_knn"):
     if os.path.exists(HISTORICO_JSON):
         with open(HISTORICO_JSON, 'r') as f:
             hist = json.load(f)
-        embs, lbls = [], []
-        for d in hist.values():
-            if isinstance(d, dict) and 'nombre' in d and d['nombre'] != 'desconocido':
-                embs.append(d['embedding'])
-                lbls.append(d['nombre'])
+            
+        datos = separar_datos(hist)
+        embs = datos['entrenamiento']['emb']
+        lbls = datos['entrenamiento']['lbl']
         if len(lbls) >= 5:
             entrenar_clasificador(
                 path_embeddings=None, etiquetas_manual=lbls,
