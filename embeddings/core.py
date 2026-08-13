@@ -49,6 +49,10 @@ def generar_embeddings(ruta_dataset='dataset_practica'):
         # Ignorar si no es una carpeta
         if not os.path.isdir(ruta_lote): continue
         
+        if nombre_lote.lower() in ["donald_trump_obstruido", "impostor"]:
+            print(f"\n[INFO] Saltando lote reservado para pruebas (Seccion 5): {nombre_lote}")
+            continue
+        
         print(f"\nProcesando lote: {nombre_lote}...")
         
         # Definir la etiqueta (si es la carpeta de obstruido, la etiqueta sigue siendo Trump)
